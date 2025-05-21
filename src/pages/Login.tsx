@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Mail, Lock, User } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Mail, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import Navbar from '../components/Navbar';
@@ -12,6 +12,7 @@ const Login: React.FC = () => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,7 +37,8 @@ const Login: React.FC = () => {
         description: "You have successfully logged in!",
       });
 
-      // In a real app, we would redirect after successful login
+      // Navigate to dashboard after successful login
+      navigate('/dashboard');
     }, 1500);
   };
 
