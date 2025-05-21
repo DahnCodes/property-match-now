@@ -1,11 +1,16 @@
 
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, User, Search } from 'lucide-react';
 import { Button } from './ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 
 const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const location = useLocation();
+  
+  // Check if user is logged in (for now, let's assume they are if they're on the dashboard)
+  const isLoggedIn = location.pathname.includes('/dashboard');
 
   return (
     <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
@@ -34,17 +39,28 @@ const Navbar: React.FC = () => {
             </Link>
           </div>
 
-          {/* Desktop buttons */}
+          {/* Desktop buttons or user avatar */}
           <div className="hidden md:flex items-center space-x-2">
-            <Button variant="ghost" size="sm" className="flex items-center">
-              <Link to="/login" className="flex items-center">
-                <User className="h-4 w-4 mr-2" />
-                <span>Sign In</span>
+            {isLoggedIn ? (
+              <Link to="/dashboard">
+                <Avatar className="h-8 w-8 cursor-pointer">
+                  <AvatarImage src="/placeholder.svg" alt="User" />
+                  <AvatarFallback className="bg-estate-200 text-estate-700">JD</AvatarFallback>
+                </Avatar>
               </Link>
-            </Button>
-            <Button variant="default" size="sm" className="bg-estate-600 hover:bg-estate-700">
-              <Link to="/register" className="text-white">Register</Link>
-            </Button>
+            ) : (
+              <>
+                <Button variant="ghost" size="sm" className="flex items-center">
+                  <Link to="/login" className="flex items-center">
+                    <User className="h-4 w-4 mr-2" />
+                    <span>Sign In</span>
+                  </Link>
+                </Button>
+                <Button variant="default" size="sm" className="bg-estate-600 hover:bg-estate-700">
+                  <Link to="/register" className="text-white">Register</Link>
+                </Button>
+              </>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -96,20 +112,36 @@ const Navbar: React.FC = () => {
               Contact
             </Link>
             <div className="pt-4 pb-3 border-t border-gray-200">
-              <Link
-                to="/login"
-                className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-estate-600 hover:bg-gray-50"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Sign In
-              </Link>
-              <Link
-                to="/register"
-                className="block px-3 py-2 rounded-md text-base font-medium text-white bg-estate-600 hover:bg-estate-700 mt-2"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Register
-              </Link>
+              {isLoggedIn ? (
+                <Link
+                  to="/dashboard"
+                  className="flex items-center px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-estate-600 hover:bg-gray-50"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <Avatar className="h-8 w-8 mr-2">
+                    <AvatarImage src="/placeholder.svg" alt="User" />
+                    <AvatarFallback className="bg-estate-200 text-estate-700">JD</AvatarFallback>
+                  </Avatar>
+                  Dashboard
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    to="/login"
+                    className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-estate-600 hover:bg-gray-50"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Sign In
+                  </Link>
+                  <Link
+                    to="/register"
+                    className="block px-3 py-2 rounded-md text-base font-medium text-white bg-estate-600 hover:bg-estate-700 mt-2"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Register
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>
