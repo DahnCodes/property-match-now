@@ -4,13 +4,17 @@ import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, User, Search } from 'lucide-react';
 import { Button } from './ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { useUser } from '@/context/UserContext';
 
 const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
+  const { isLoggedIn, role } = useUser();
   
-  // Check if user is logged in (for now, let's assume they are if they're on the dashboard)
-  const isLoggedIn = location.pathname.includes('/dashboard');
+  // We want to hide the navbar on the dashboard
+  if (location.pathname.includes('/dashboard')) {
+    return null;
+  }
 
   return (
     <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
@@ -45,7 +49,9 @@ const Navbar: React.FC = () => {
               <Link to="/dashboard">
                 <Avatar className="h-8 w-8 cursor-pointer">
                   <AvatarImage src="/placeholder.svg" alt="User" />
-                  <AvatarFallback className="bg-estate-200 text-estate-700">JD</AvatarFallback>
+                  <AvatarFallback className="bg-estate-200 text-estate-700">
+                    {role === 'agent' ? 'AG' : 'HS'}
+                  </AvatarFallback>
                 </Avatar>
               </Link>
             ) : (
@@ -120,7 +126,9 @@ const Navbar: React.FC = () => {
                 >
                   <Avatar className="h-8 w-8 mr-2">
                     <AvatarImage src="/placeholder.svg" alt="User" />
-                    <AvatarFallback className="bg-estate-200 text-estate-700">JD</AvatarFallback>
+                    <AvatarFallback className="bg-estate-200 text-estate-700">
+                      {role === 'agent' ? 'AG' : 'HS'}
+                    </AvatarFallback>
                   </Avatar>
                   Dashboard
                 </Link>

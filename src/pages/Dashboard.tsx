@@ -1,14 +1,38 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LayoutDashboard, Home, User, Settings, LogOut, Menu, Bell } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Footer from '../components/Footer';
+import { useUser } from '@/context/UserContext';
+import PropertyUploadForm from '@/components/dashboard/PropertyUploadForm';
+import PropertyListings from '@/components/dashboard/PropertyListings';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
+  const { role, setRole, setIsLoggedIn } = useUser();
+
+  // Temporary code for demo purposes - in a real app, this would be set during login
+  useEffect(() => {
+    // If no role is set, prompt the user to choose one (this would be handled during login in a real app)
+    if (!role) {
+      const userRole = window.prompt('Are you a "seeker" or an "agent"?');
+      if (userRole === 'seeker' || userRole === 'agent') {
+        setRole(userRole);
+      } else {
+        // Default to seeker if invalid input
+        setRole('seeker');
+      }
+    }
+  }, [role, setRole]);
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setRole(null);
+    navigate('/login');
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
@@ -98,7 +122,7 @@ const Dashboard: React.FC = () => {
               <Button 
                 variant="ghost" 
                 className="w-full justify-start text-gray-700 hover:text-red-600 hover:bg-red-50"
-                onClick={() => navigate('/login')}
+                onClick={handleLogout}
               >
                 <LogOut className="w-5 h-5 mr-3" />
                 Sign Out
@@ -118,21 +142,38 @@ const Dashboard: React.FC = () => {
             </div>
             
             <div className="mb-8">
-              <h1 className="text-3xl font-bold text-gray-900 hidden md:block">Your Dashboard</h1>
-              <p className="mt-2 text-gray-600">Manage your property search and connections</p>
+              <h1 className="text-3xl font-bold text-gray-900 hidden md:block">
+                {role === 'agent' ? 'Agent Dashboard' : 'Home Seeker Dashboard'}
+              </h1>
+              <p className="mt-2 text-gray-600">
+                {role === 'agent' 
+                  ? 'Manage your property listings and client connections' 
+                  : 'Find your perfect home and connect with agents'}
+              </p>
             </div>
             
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            {/* Role-specific content */}
+            {role === 'agent' ? (
+              <div className="mb-8 space-y-8">
+                {/* Agent-specific content */}
+                <PropertyUploadForm />
+              </div>
+            ) : (
+              <PropertyListings />
+            )}
+            
+            {/* Common tabs section */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mt-8">
               <Tabs defaultValue="saved" className="w-full">
                 <div className="border-b border-gray-200">
                   <TabsList className="flex w-full bg-transparent border-b">
                     <TabsTrigger value="saved" className="flex items-center px-6 py-3 data-[state=active]:border-b-2 data-[state=active]:border-estate-600 data-[state=active]:text-estate-600 rounded-none">
                       <Home className="w-4 h-4 mr-2" />
-                      Saved Properties
+                      {role === 'agent' ? 'My Listings' : 'Saved Properties'}
                     </TabsTrigger>
                     <TabsTrigger value="messages" className="flex items-center px-6 py-3 data-[state=active]:border-b-2 data-[state=active]:border-estate-600 data-[state=active]:text-estate-600 rounded-none">
                       <User className="w-4 h-4 mr-2" />
-                      Agent Messages
+                      {role === 'agent' ? 'Client Messages' : 'Agent Messages'}
                     </TabsTrigger>
                     <TabsTrigger value="settings" className="flex items-center px-6 py-3 data-[state=active]:border-b-2 data-[state=active]:border-estate-600 data-[state=active]:text-estate-600 rounded-none">
                       <Settings className="w-4 h-4 mr-2" />
@@ -143,16 +184,22 @@ const Dashboard: React.FC = () => {
                 
                 <TabsContent value="saved" className="p-6">
                   <div className="space-y-4">
-                    {/* Placeholder content for saved properties */}
+                    {/* Placeholder content for saved properties/listings */}
                     <div className="text-center py-12">
                       <LayoutDashboard className="w-12 h-12 mx-auto text-gray-400" />
-                      <h3 className="mt-4 text-lg font-medium text-gray-900">No saved properties yet</h3>
-                      <p className="mt-2 text-gray-500">Browse properties and save your favorites to see them here.</p>
+                      <h3 className="mt-4 text-lg font-medium text-gray-900">
+                        {role === 'agent' ? 'No property listings yet' : 'No saved properties yet'}
+                      </h3>
+                      <p className="mt-2 text-gray-500">
+                        {role === 'agent' 
+                          ? 'Upload properties using the form above to see them here.' 
+                          : 'Browse properties and save your favorites to see them here.'}
+                      </p>
                       <Button 
                         className="mt-4 bg-estate-600 hover:bg-estate-700"
                         onClick={() => navigate('/properties')}
                       >
-                        Browse Properties
+                        {role === 'agent' ? 'Manage Listings' : 'Browse Properties'}
                       </Button>
                     </div>
                   </div>
@@ -164,12 +211,16 @@ const Dashboard: React.FC = () => {
                     <div className="text-center py-12">
                       <User className="w-12 h-12 mx-auto text-gray-400" />
                       <h3 className="mt-4 text-lg font-medium text-gray-900">No messages yet</h3>
-                      <p className="mt-2 text-gray-500">Connect with agents to start receiving messages.</p>
+                      <p className="mt-2 text-gray-500">
+                        {role === 'agent' 
+                          ? 'Connect with potential buyers to start receiving messages.' 
+                          : 'Connect with agents to start receiving messages.'}
+                      </p>
                       <Button 
                         className="mt-4 bg-estate-600 hover:bg-estate-700"
-                        onClick={() => navigate('/agents')}
+                        onClick={() => navigate(role === 'agent' ? '/dashboard' : '/agents')}
                       >
-                        Find Agents
+                        {role === 'agent' ? 'Update Profile' : 'Find Agents'}
                       </Button>
                     </div>
                   </div>
