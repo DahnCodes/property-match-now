@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -14,19 +13,10 @@ const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const { role, setRole, setIsLoggedIn } = useUser();
 
-  // Temporary code for demo purposes - in a real app, this would be set during login
-  useEffect(() => {
-    // If no role is set, prompt the user to choose one (this would be handled during login in a real app)
-    if (!role) {
-      const userRole = window.prompt('Are you a "seeker" or an "agent"?');
-      if (userRole === 'seeker' || userRole === 'agent') {
-        setRole(userRole);
-      } else {
-        // Default to seeker if invalid input
-        setRole('seeker');
-      }
-    }
-  }, [role, setRole]);
+  // If no role is set, default to seeker (failsafe)
+  if (!role) {
+    navigate('/login');
+  }
 
   const handleLogout = () => {
     setIsLoggedIn(false);

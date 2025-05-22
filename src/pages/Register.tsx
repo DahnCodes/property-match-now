@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, User, UserPlus, Building } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import { useUser } from '@/context/UserContext';
 
 const Register: React.FC = () => {
   const [userType, setUserType] = useState<'seeker' | 'agent'>('seeker');
@@ -21,6 +22,8 @@ const Register: React.FC = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const { setRole, setIsLoggedIn } = useUser();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -66,12 +69,17 @@ const Register: React.FC = () => {
     setTimeout(() => {
       setIsLoading(false);
       
+      // Set user role and login status
+      setRole(userType);
+      setIsLoggedIn(true);
+      
       toast({
         title: "Account created",
         description: `Your ${userType} account has been successfully created!`,
       });
 
-      // In a real app, we would redirect after successful registration
+      // Redirect to dashboard after successful registration
+      navigate('/dashboard');
     }, 1500);
   };
 
