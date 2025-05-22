@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,6 +12,8 @@ import {
 } from '@/components/ui/select';
 import { Home, Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { v4 as uuidv4 } from 'uuid';
+import { usePropertyStore } from '@/stores/propertyStore';
 
 const PropertyUploadForm: React.FC = () => {
   const { toast } = useToast();
@@ -29,6 +30,8 @@ const PropertyUploadForm: React.FC = () => {
     status: 'available',
     images: null as FileList | null
   });
+  
+  const { addProperty } = usePropertyStore();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -53,6 +56,27 @@ const PropertyUploadForm: React.FC = () => {
       // In a real app, this would send data to your backend
       // For demo purposes, we'll just simulate an upload
       await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Generate a placeholder image if none is provided
+      let imageUrl = 'https://placehold.co/600x400?text=Property+Image';
+      
+      // Create a new property with generated ID
+      const newProperty = {
+        id: uuidv4(),
+        title: formData.title,
+        address: formData.address,
+        price: Number(formData.price) || 0,
+        bedrooms: Number(formData.bedrooms) || 0,
+        bathrooms: Number(formData.bathrooms) || 0,
+        squareFeet: Number(formData.squareFeet) || 0,
+        propertyType: formData.propertyType,
+        status: formData.status as 'available' | 'pending' | 'sold' | 'rented',
+        imageUrl,
+        description: formData.description,
+      };
+      
+      // Add the property to the store
+      addProperty(newProperty);
       
       toast({
         title: "Property uploaded successfully!",

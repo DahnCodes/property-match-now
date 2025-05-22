@@ -147,6 +147,7 @@ const Dashboard: React.FC = () => {
               <div className="mb-8 space-y-8">
                 {/* Agent-specific content */}
                 <PropertyUploadForm />
+                <PropertyListings />
               </div>
             ) : (
               <PropertyListings />
