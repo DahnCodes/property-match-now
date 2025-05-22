@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, User, UserPlus, Building } from 'lucide-react';
@@ -23,7 +22,7 @@ const Register: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { setRole, setIsLoggedIn } = useUser();
+  const { setRole } = useUser();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -69,17 +68,16 @@ const Register: React.FC = () => {
     setTimeout(() => {
       setIsLoading(false);
       
-      // Set user role and login status
-      setRole(userType);
-      setIsLoggedIn(true);
+      // Store user type for login reference
+      localStorage.setItem('registeredUserType', userType);
       
       toast({
         title: "Account created",
-        description: `Your ${userType} account has been successfully created!`,
+        description: `Your ${userType} account has been successfully created! Please sign in with your credentials.`,
       });
 
-      // Redirect to dashboard after successful registration
-      navigate('/dashboard');
+      // Redirect to login page after successful registration
+      navigate('/login', { state: { email: formData.email, userType } });
     }, 1500);
   };
 
