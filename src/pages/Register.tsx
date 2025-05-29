@@ -217,7 +217,7 @@ const Register: React.FC = () => {
                   className="h-4 w-4 text-estate-600 focus:ring-estate-500 border-gray-300 rounded"
                 />
                 <label htmlFor="terms" className="ml-2 block text-sm text-gray-600">
-                  I agree to the <Link to="/terms" className="text-estate-600 hover:text-estate-500">Terms of Service</Link> and <Link to="/privacy" className="text-estate-600 hover:text-estate-500">Privacy Policy</Link>
+                  I agree to the <Link to="/terms" className="text-estate-600 hover:text-estate-500">Terms of Service</Link> and <Link to="/privacy" className=\"text-estate-600 hover:text-estate-500">Privacy Policy</Link>
                 </label>
               </div>
 
