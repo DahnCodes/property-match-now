@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { useUser } from '@/context/UserContext';
+import { useAuthStore } from '@/stores/authStore';
 
 const Register: React.FC = () => {
   const [userType, setUserType] = useState<'seeker' | 'agent'>('seeker');
@@ -19,10 +19,10 @@ const Register: React.FC = () => {
     confirmPassword: '',
     licenseNumber: '', // For agents only
   });
-  const [isLoading, setIsLoading] = useState(false);
+  
+  const { signUp, isLoading } = useAuthStore();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { setRole } = useUser();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -62,23 +62,29 @@ const Register: React.FC = () => {
       return;
     }
     
-    setIsLoading(true);
-    
-    // Simulate registration API call
-    setTimeout(() => {
-      setIsLoading(false);
-      
-      // Store user type for login reference
-      localStorage.setItem('registeredUserType', userType);
+    try {
+      // Additional user data for profile
+      const profileData = {
+        name: formData.name,
+        ...(userType === 'agent' && { licenseNumber: formData.licenseNumber }),
+      };
+
+      await signUp(formData.email, formData.password, userType, profileData);
       
       toast({
         title: "Account created",
-        description: `Your ${userType} account has been successfully created! Please sign in with your credentials.`,
+        description: "Your account has been successfully created! Please sign in with your credentials.",
       });
 
-      // Redirect to login page after successful registration
+      // Redirect to login page with email pre-filled
       navigate('/login', { state: { email: formData.email, userType } });
-    }, 1500);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create account. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (

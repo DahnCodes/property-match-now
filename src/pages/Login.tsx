@@ -8,18 +8,18 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { useUser } from '@/context/UserContext';
+import { useAuthStore } from '@/stores/authStore';
 
 const Login: React.FC = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
-  const [isLoading, setIsLoading] = useState(false);
+  
+  const { signIn, isLoading } = useAuthStore();
   const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
-  const { setRole, setIsLoggedIn } = useUser();
   
   // Check for email from registration and pre-fill it
   useEffect(() => {
@@ -53,21 +53,8 @@ const Login: React.FC = () => {
       return;
     }
     
-    setIsLoading(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
-      
-      // Determine user role - first check if there's a role from registration state
-      const userRole = location.state?.userType || localStorage.getItem('registeredUserType') || 'seeker';
-      
-      // Clear the temporary storage after using it
-      localStorage.removeItem('registeredUserType');
-      
-      // Set user role and login state
-      setRole(userRole as 'seeker' | 'agent');
-      setIsLoggedIn(true);
+    try {
+      await signIn(formData.email, formData.password);
       
       toast({
         title: "Welcome back!",
@@ -76,7 +63,13 @@ const Login: React.FC = () => {
 
       // Navigate to dashboard
       navigate('/dashboard');
-    }, 1000);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to sign in. Please check your credentials.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
