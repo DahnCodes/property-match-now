@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { Home } from 'lucide-react';
 import PropertyCard from '../PropertyCard';
 import { usePropertyStore } from '@/stores/propertyStore';
 import { useUser } from '@/context/UserContext';
