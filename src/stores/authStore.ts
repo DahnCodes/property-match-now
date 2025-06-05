@@ -1,78 +1,88 @@
+
 import { create } from 'zustand';
-import { supabase } from '@/lib/supabase';
-import { User } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
+import { User, Session } from '@supabase/supabase-js';
 
 interface AuthState {
   user: User | null;
+  session: Session | null;
   role: 'agent' | 'seeker' | null;
   isLoading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, role: 'agent' | 'seeker', data: any) => Promise<void>;
+  signUp: (email: string, password: string, role: 'agent' | 'seeker', userData: any) => Promise<void>;
   signOut: () => Promise<void>;
   setUser: (user: User | null) => void;
+  setSession: (session: Session | null) => void;
   setRole: (role: 'agent' | 'seeker' | null) => void;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
+  session: null,
   role: null,
   isLoading: false,
 
   setUser: (user) => set({ user }),
+  setSession: (session) => set({ session }),
   setRole: (role) => set({ role }),
 
   signIn: async (email: string, password: string) => {
     set({ isLoading: true });
     try {
-      const { data: { user }, error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) throw error;
 
-      // Fetch user role from profiles table
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single();
+      // Fetch user profile to get role
+      if (data.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', data.user.id)
+          .single();
 
-      set({ 
-        user, 
-        role: profile?.role || null,
-        isLoading: false 
-      });
+        // Check if user exists in old users table for role mapping
+        const { data: userData } = await supabase
+          .from('users')
+          .select('*')
+          .eq('email', email)
+          .single();
+
+        set({ 
+          user: data.user, 
+          session: data.session,
+          role: userData?.favorite_team ? 'seeker' : 'agent', // Simple role mapping
+          isLoading: false 
+        });
+      }
     } catch (error) {
       set({ isLoading: false });
       throw error;
     }
   },
 
-  signUp: async (email: string, password: string, role: 'agent' | 'seeker', data: any) => {
+  signUp: async (email: string, password: string, role: 'agent' | 'seeker', userData: any) => {
     set({ isLoading: true });
     try {
-      const { data: { user }, error } = await supabase.auth.signUp({
+      const redirectUrl = `${window.location.origin}/`;
+      
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          emailRedirectTo: redirectUrl,
+          data: {
+            name: userData.name,
+            role: role,
+            ...userData
+          }
+        }
       });
 
       if (error) throw error;
-
-      // Create profile with additional data
-      if (user) {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert([
-            {
-              id: user.id,
-              role,
-              ...data,
-            },
-          ]);
-
-        if (profileError) throw profileError;
-      }
 
       set({ isLoading: false });
     } catch (error) {
@@ -85,46 +95,40 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
-      set({ user: null, role: null });
+      set({ user: null, session: null, role: null });
     } catch (error) {
       throw error;
     }
   },
 }));
 
-// Initialize auth state from session
-supabase.auth.getSession().then(({ data: { session } }) => {
+// Initialize auth state
+supabase.auth.onAuthStateChange((event, session) => {
+  const { setUser, setSession, setRole } = useAuthStore.getState();
+  
+  setSession(session);
+  setUser(session?.user ?? null);
+  
   if (session?.user) {
-    useAuthStore.getState().setUser(session.user);
-    
-    // Fetch user role
-    supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', session.user.id)
-      .single()
-      .then(({ data }) => {
-        useAuthStore.getState().setRole(data?.role || null);
-      });
+    // Fetch role from profiles or users table
+    setTimeout(() => {
+      supabase
+        .from('users')
+        .select('*')
+        .eq('email', session.user.email)
+        .single()
+        .then(({ data }) => {
+          setRole(data?.favorite_team ? 'seeker' : 'agent');
+        });
+    }, 0);
+  } else {
+    setRole(null);
   }
 });
 
-// Listen for auth changes
-supabase.auth.onAuthStateChange((event, session) => {
-  if (session?.user) {
-    useAuthStore.getState().setUser(session.user);
-    
-    // Fetch user role
-    supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', session.user.id)
-      .single()
-      .then(({ data }) => {
-        useAuthStore.getState().setRole(data?.role || null);
-      });
-  } else {
-    useAuthStore.getState().setUser(null);
-    useAuthStore.getState().setRole(null);
-  }
+// Check for existing session
+supabase.auth.getSession().then(({ data: { session } }) => {
+  const { setUser, setSession } = useAuthStore.getState();
+  setSession(session);
+  setUser(session?.user ?? null);
 });

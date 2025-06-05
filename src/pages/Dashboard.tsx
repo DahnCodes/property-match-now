@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -5,24 +6,33 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LayoutDashboard, Home, User, Settings, LogOut, Menu, Bell } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Footer from '../components/Footer';
-import { useUser } from '@/context/UserContext';
+import { useAuthStore } from '@/stores/authStore';
 import PropertyUploadForm from '@/components/dashboard/PropertyUploadForm';
 import PropertyListings from '@/components/dashboard/PropertyListings';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { role, setRole, setIsLoggedIn } = useUser();
+  const { user, role, signOut } = useAuthStore();
 
-  // If no role is set, default to seeker (failsafe)
-  if (!role) {
-    navigate('/login');
-  }
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (!user) {
+      navigate('/auth');
+    }
+  }, [user, navigate]);
 
-  const handleLogout = () => {
-    setIsLoggedIn(false);
-    setRole(null);
-    navigate('/login');
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      navigate('/auth');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
   };
+
+  if (!user) {
+    return null; // Will redirect in useEffect
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
@@ -56,7 +66,9 @@ const Dashboard: React.FC = () => {
               <div className="flex items-center space-x-2">
                 <Avatar className="h-8 w-8 cursor-pointer">
                   <AvatarImage src="/placeholder.svg" alt="User" />
-                  <AvatarFallback className="bg-estate-200 text-estate-700">JD</AvatarFallback>
+                  <AvatarFallback className="bg-estate-200 text-estate-700">
+                    {user.email?.charAt(0).toUpperCase()}
+                  </AvatarFallback>
                 </Avatar>
               </div>
             </div>
@@ -136,9 +148,7 @@ const Dashboard: React.FC = () => {
                 {role === 'agent' ? 'Agent Dashboard' : 'Home Seeker Dashboard'}
               </h1>
               <p className="mt-2 text-gray-600">
-                {role === 'agent' 
-                  ? 'Manage your property listings and client connections' 
-                  : 'Find your perfect home and connect with agents'}
+                Welcome back, {user.email}!
               </p>
             </div>
             
@@ -226,27 +236,18 @@ const Dashboard: React.FC = () => {
                     
                     <div className="space-y-4">
                       <div>
-                        <label htmlFor="name" className="block text-sm font-medium text-gray-700">Full Name</label>
-                        <input
-                          type="text"
-                          id="name"
-                          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-estate-500 focus:border-estate-500"
-                          placeholder="John Doe"
-                        />
-                      </div>
-                      
-                      <div>
                         <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
                         <input
                           type="email"
                           id="email"
                           className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-estate-500 focus:border-estate-500"
-                          placeholder="johndoe@example.com"
+                          value={user.email || ''}
+                          disabled
                         />
                       </div>
                       
                       <div className="pt-4">
-                        <Button variant="default" className="w-full bg-estate-600 hover:bg-estate-700">
+                        <Button variant="default" className="w-full bg-estate-600 hover:bg-estate-700" disabled>
                           Save Changes
                         </Button>
                       </div>

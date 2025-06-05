@@ -86,6 +86,30 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          created_at: string | null
+          email: string
+          favorite_team: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          favorite_team?: string | null
+          id: string
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          favorite_team?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       reactions: {
         Row: {
           created_at: string | null
